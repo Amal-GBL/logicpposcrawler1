@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:cloud.logicerpcloud.com)",
+      "Bash(curl -s -c /tmp/logicpos_cookies.txt -b /tmp/logicpos_cookies.txt -X GET \"https://cloud.logicerpcloud.com/Login/UserLogin\" -H \"User-Agent: Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" -D /tmp/logicpos_headers.txt -o /tmp/logicpos_login_page.html)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(curl -s \"https://b.logicerpcloud.com/db3pos1/jqwidgets/CommonFunctions.js?v=638720429540000000\" -H \"User-Agent: Mozilla/5.0\" -b /tmp/logicpos_b_cookies.txt)",
+      "Bash(curl -s \"https://b.logicerpcloud.com/db3pos1/jqwidgets/CommonFunctions.js\" -H \"User-Agent: Mozilla/5.0\" -b /tmp/logicpos_b_cookies.txt -o /tmp/CommonFunctions.js wc -l /tmp/CommonFunctions.js grep -n \"GetEncryptedValue\\\\|AES\\\\|encrypt\\\\|CryptoJS\\\\|key\\\\|iv\\\\|secret\" /tmp/CommonFunctions.js)",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(curl -s -c /tmp/logicpos_b_cookies.txt -b /tmp/logicpos_b_cookies.txt -X POST \"https://b.logicerpcloud.com/db3pos1/Login/Login\" -H \"User-Agent: Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36\" -H \"Content-Type: application/json; charset=utf-8\" -H \"X-Requested-With: XMLHttpRequest\" -H \"Referer: https://b.logicerpcloud.com/db3pos1/Login/UserLogin\" -d '{\"\"userNameIndex\"\":\"\"YnQEsqhkqghFPDEjanP7sA==\"\",\"\"password\"\":\"\"+vPtHg8nqI2HlBSqCfvGWg==\"\",\"\"deviceFingerPrint\"\":\"\"1234567890\"\",\"\"browser\"\":\"\"Chrome\"\"}')"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -c /tmp/logicpos_b_cookies.txt -b /tmp/logicpos_b_cookies.txt -X POST \"https://b.logicerpcloud.com/db3reports3/Report/LoadSettings\" -H \"Content-Type: application/json; charset=utf-8\" -H \"X-Requested-With: XMLHttpRequest\" -H \"Referer: https://b.logicerpcloud.com/db3reports3/Report/List?className=Stock_Qry_New_Proc|734\" -H \"User-Agent: Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36\" -d '{\"\"\"\"className\"\"\"\":\"\"\"\"Stock_Qry_New_Proc|734\"\"\"\"}' -D -)",
+      "Bash(curl -s -c /tmp/logicpos_b_cookies.txt -b /tmp/logicpos_b_cookies.txt -X POST \"https://b.logicerpcloud.com/db3reports3/Report/GetSelectionListView\" -H \"Content-Type: application/json; charset=utf-8\" -H \"X-Requested-With: XMLHttpRequest\" -d '{\"\"className\"\":\"\"Stock_Qry_New_Proc|734\"\"}' -o /tmp/sel_list.json)",
+      "Bash(curl -s -c /tmp/logicpos_b_cookies.txt -b /tmp/logicpos_b_cookies.txt -X POST \"https://b.logicerpcloud.com/db3reports3/Report/GetFinYearListView\" -H \"Content-Type: application/json; charset=utf-8\" -H \"X-Requested-With: XMLHttpRequest\" -d '{\"\"className\"\":\"\"Stock_Qry_New_Proc|734\"\"}' -o /tmp/fin_list.json)",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}
