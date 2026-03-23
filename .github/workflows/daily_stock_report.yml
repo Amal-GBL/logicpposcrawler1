@@ -17,6 +17,12 @@ jobs:
 
       - run: npm install
 
+      - name: Check secrets are set
+        run: |
+          echo "DB_HOST set: ${{ secrets.DB_HOST != '' }}"
+          echo "DB_NAME set: ${{ secrets.DB_NAME != '' }}"
+          echo "DB_USER set: ${{ secrets.DB_USER != '' }}"
+
       - run: node fetch_stock_report.js
         env:
           CLOUD_USERNAME: ${{ secrets.CLOUD_USERNAME }}
