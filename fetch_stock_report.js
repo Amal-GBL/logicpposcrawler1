@@ -48,29 +48,45 @@ function aesEncrypt(value) {
 
 class Session {
     constructor() {
-        this.cookies = new Map();
+        // domain -> Map(name -> value)  — cookies are scoped by domain like a real browser
+        this.cookieJar = new Map();
     }
 
-    _extractCookies(headers) {
+    _extractCookies(headers, requestHostname) {
         let setCookies = headers['set-cookie'];
         if (!setCookies) return;
         if (!Array.isArray(setCookies)) setCookies = [setCookies];
-        
+
         for (const cookieStr of setCookies) {
-            const firstPart = cookieStr.split(';')[0];
-            const eqIdx = firstPart.indexOf('=');
-            if (eqIdx !== -1) {
-                const name = firstPart.substring(0, eqIdx).trim();
-                const value = firstPart.substring(eqIdx + 1).trim();
-                this.cookies.set(name, value);
+            const parts = cookieStr.split(';').map(p => p.trim());
+            const eqIdx = parts[0].indexOf('=');
+            if (eqIdx === -1) continue;
+            const name  = parts[0].substring(0, eqIdx).trim();
+            const value = parts[0].substring(eqIdx + 1).trim();
+
+            // Respect Domain attribute; strip leading dot
+            let domain = requestHostname;
+            for (const attr of parts.slice(1)) {
+                if (attr.toLowerCase().startsWith('domain=')) {
+                    domain = attr.substring(7).trim().replace(/^\./, '').toLowerCase();
+                    break;
+                }
             }
+
+            if (!this.cookieJar.has(domain)) this.cookieJar.set(domain, new Map());
+            this.cookieJar.get(domain).set(name, value);
         }
     }
 
-    _getCookieString() {
+    _getCookieString(requestHostname) {
         const parts = [];
-        for (const [name, value] of this.cookies.entries()) {
-            parts.push(`${name}=${value}`);
+        for (const [domain, cookies] of this.cookieJar.entries()) {
+            // Send if hostname matches domain or is a subdomain of domain
+            if (requestHostname === domain || requestHostname.endsWith('.' + domain)) {
+                for (const [name, value] of cookies.entries()) {
+                    parts.push(`${name}=${value}`);
+                }
+            }
         }
         return parts.join('; ');
     }
@@ -97,13 +113,13 @@ class Session {
                 headers: { ...baseHeaders, ...options.headers }
             };
 
-            const cookieStr = this._getCookieString();
+            const cookieStr = this._getCookieString(url.hostname);
             if (cookieStr) {
                 reqOptions.headers['Cookie'] = cookieStr;
             }
 
             const req = https.request(reqOptions, (res) => {
-                this._extractCookies(res.headers);
+                this._extractCookies(res.headers, url.hostname);
 
                 let body = '';
                 res.setEncoding('utf8');
