@@ -1,0 +1,33 @@
+name: Daily Stock Report
+
+on:
+  schedule:
+    - cron: '30 3 * * *'  # 9am IST (UTC+5:30)
+  workflow_dispatch:       # allows manual trigger from GitHub UI
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install
+
+      - run: node fetch_stock_report.js
+        env:
+          CLOUD_USERNAME: ${{ secrets.CLOUD_USERNAME }}
+          CLOUD_PASSWORD: ${{ secrets.CLOUD_PASSWORD }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          AES_KEY_IV: ${{ secrets.AES_KEY_IV }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
+          DB_TABLE: ${{ secrets.DB_TABLE }}
+          BRAND_NAME: ${{ secrets.BRAND_NAME }}
