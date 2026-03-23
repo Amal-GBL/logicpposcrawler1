@@ -247,6 +247,13 @@ async function step6AccessReports(s, APP_BASE, REPORTS_BASE) {
     console.log("[6] Accessing reports server ...");
     await s.get(`${APP_BASE}/Home/Index`);
 
+    // Also visit the pos server matching the reports server (db3reportsN → db3posN)
+    // so the right domain-wide cookie is set when APP_BASE is a different server number
+    const matchingPosBase = REPORTS_BASE.replace(/reports(\d+)$/, 'pos$1');
+    if (matchingPosBase !== APP_BASE) {
+        await s.get(`${matchingPosBase}/Home/Index`);
+    }
+
     const res = await s.get(`${REPORTS_BASE}/Report/List?className=${encodeURIComponent(REPORT_CLASS)}`);
     if (res.status !== 200) {
         throw new Error(`Reports page returned ${res.status}`);
