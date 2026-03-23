@@ -5,7 +5,7 @@
 
 const crypto = require('crypto');
 const https = require('https');
-const { Pool } = require('pg');
+const { google } = require('googleapis');
 require('dotenv').config();
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────────
@@ -26,15 +26,11 @@ const CONFIG_IDX       = 20;          // "POS CLOSING STOCK REPORT - ITEM WISE"
 const PAGE_SIZE        = 500;
 const REPORTS_SERVER   = process.env.REPORTS_SERVER || "db3reports3"; // reports server is fixed regardless of which pos server is assigned
 
-// Database Config
-const DB_HOST          = process.env.DB_HOST || "localhost";
-const DB_PORT          = process.env.DB_PORT || "5432";
-const DB_NAME          = process.env.DB_NAME || "postgres";
-const DB_USER          = process.env.DB_USER || "postgres";
-const DB_PASSWORD      = process.env.DB_PASSWORD || "";
-const DB_SCHEMA        = process.env.DB_SCHEMA || "public";
-const DB_TABLE         = process.env.DB_TABLE || "Ebo_inventory";
+// Google Sheets Config
+const SPREADSHEET_ID   = process.env.SPREADSHEET_ID || "1cXHwhUW8zXQvD46yAzmZkGMYE48JIOrzDhNdnBe-YFo";
+const SHEET_NAME       = process.env.SHEET_NAME || "Sheet1";
 const BRAND_NAME       = process.env.BRAND_NAME || "THE LABEL LIFE";
+// GOOGLE_CREDENTIALS env var should contain the full service account JSON as a string
 // ───────────────────────────────────────────────────────────────────────────────
 
 function aesEncrypt(value) {
@@ -387,59 +383,44 @@ async function step10Download(s, BASE) {
     return { cols, rows: allRows };
 }
 
-// ── STEP 11 : Save to Database ─────────────────────────────────────────────────
-async function step11SaveToDb(cols, rows) {
-    console.log("[11] Saving data to PostgreSQL database ...");
-    
-    const pool = new Pool({
-        host: DB_HOST,
-        port: parseInt(DB_PORT, 10),
-        database: DB_NAME,
-        user: DB_USER,
-        password: DB_PASSWORD
+// ── STEP 11 : Save to Google Sheet ─────────────────────────────────────────────
+async function step11SaveToSheet(cols, rows) {
+    console.log("[11] Saving data to Google Sheet ...");
+
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    const auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    // Clear the sheet then write headers + all rows
+    await sheets.spreadsheets.values.clear({
+        spreadsheetId: SPREADSHEET_ID,
+        range: SHEET_NAME,
     });
 
-    const client = await pool.connect();
+    const header = [...cols, 'BRAND', 'SYNC_DATE'];
+    const syncDate = new Date().toISOString().slice(0, 10);
+    const values = [
+        header,
+        ...rows.map(row => {
+            const r = [...row];
+            while (r.length < cols.length) r.push('');
+            r.length = cols.length;
+            r.push(BRAND_NAME, syncDate);
+            return r.map(v => v === null || v === undefined ? '' : String(v));
+        }),
+    ];
 
-    try {
-        const cleanCols = cols.map(c => String(c).trim().replace(/ /g, '_').replace(/\./g, '').replace(/-/g, '_').toLowerCase());
-        cleanCols.push("brand");
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A1`,
+        valueInputOption: 'RAW',
+        requestBody: { values },
+    });
 
-        await client.query('BEGIN');
-
-        // Delete today's existing rows for this brand before re-inserting (idempotent daily run)
-        await client.query(
-            `DELETE FROM "${DB_SCHEMA}"."${DB_TABLE}" WHERE "brand" = $1 AND sync_timestamp::date = CURRENT_DATE`,
-            [BRAND_NAME]
-        );
-
-        const placeholders = cleanCols.map((_, i) => `$${i + 1}`).join(', ');
-        const colNames = cleanCols.map(c => `"${c}"`).join(', ');
-        const insertQuery = `INSERT INTO "${DB_SCHEMA}"."${DB_TABLE}" (${colNames}) VALUES (${placeholders})`;
-
-        for (const row of rows) {
-            const rowData = [...row];
-            if (rowData.length < cols.length) {
-                while(rowData.length < cols.length) rowData.push(null);
-            } else if (rowData.length > cols.length) {
-                rowData.length = cols.length;
-            }
-            rowData.push(BRAND_NAME);
-            
-            const params = rowData.map(val => val === null || val === undefined ? null : String(val));
-            await client.query(insertQuery, params);
-        }
-
-        await client.query('COMMIT');
-        console.log(`    Saved ${rows.length} rows to schema/table '"${DB_SCHEMA}"."${DB_TABLE}"'.`);
-    } catch (err) {
-        await client.query('ROLLBACK');
-        console.error("Database error:", err);
-        throw err;
-    } finally {
-        client.release();
-        await pool.end();
-    }
+    console.log(`    Saved ${rows.length} rows to sheet.`);
 }
 
 // ── MAIN ────────────────────────────────────────────────────────────────────────
@@ -465,9 +446,9 @@ async function main() {
         await step9CreateReport(s, reportsBase);
         const { cols, rows } = await step10Download(s, reportsBase);
 
-        await step11SaveToDb(cols, rows);
+        await step11SaveToSheet(cols, rows);
 
-        console.log(`\n✓ Done! Data successfully saved to database table: "${DB_SCHEMA}"."${DB_TABLE}"`);
+        console.log(`\n✓ Done! ${rows.length} rows saved to Google Sheet.`);
     } catch (e) {
         console.error("Fatal error:", e);
     }

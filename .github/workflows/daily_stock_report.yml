@@ -23,11 +23,7 @@ jobs:
           CLOUD_PASSWORD: ${{ secrets.CLOUD_PASSWORD }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           AES_KEY_IV: ${{ secrets.AES_KEY_IV }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
-          DB_TABLE: ${{ secrets.DB_TABLE }}
           BRAND_NAME: ${{ secrets.BRAND_NAME }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          SHEET_NAME: ${{ secrets.SHEET_NAME }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
